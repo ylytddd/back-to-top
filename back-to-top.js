@@ -1,11 +1,9 @@
-/**
- * 
- * @authors Your Name (you@example.org)
- * @date    2016-05-19 10:34:25
- * @version 0.0.1
- */
 
- 	
+
+/*
+    1.0.0
+*/
+	
 ;(function (window) {
 
     // 
@@ -69,29 +67,33 @@
 
 
     // main class
-    var ToTop = function (options,callback) {
+    var ToTop = function (backBtnEle, scrollBody, options) {
 
-        for(var i = arguments.length - 1; i >= 0; i--) {
 
-            if(typeof arguments[i] == 'function') {
-
-                this.callback = arguments[i];
-            }else if(typeof arguments[i] == 'object') {
-
-                this.options = arguments[i];
-            }else {
-                throw '参数类型不对'
-            }
-        }
-
-        for(var item in this.options) {
+        for(var item in arguments[2]) {
+        	
             this[item] = options[item]
         }
+
+        // 事件集合
+        this.evnetCollection = {
+
+        }
+
+        this.backBtnEle = typeof backBtnEle === 'string' ? document.querySelector(backBtnEle) : backBtnEle;
+
+        this.scrollBody = typeof scrollBody === 'string' ? document.querySelector(scrollBody) : scrollBody;
+        
+        this.bind(this.backBtnEle, this.scrollBody);
     };
 
 
 
     ToTop.prototype = {
+
+    	on: function (action, callback) {
+            this.evnetCollection[action] = callback;
+    	},
 
     	/*
 			绑定函数
@@ -103,9 +105,6 @@
         bind: function (backBtnEle, scrollBody) {
 
             var self = this;
-
-            var backBtnEle = typeof backBtnEle === 'string' ? document.querySelector(backBtnEle) : backBtnEle;
-            var scrollBody = typeof scrollBody === 'string' ? document.querySelector(scrollBody) : scrollBody;
 
             var scrollContainer = Utils.findScrollContainer(scrollBody);
             /**************
@@ -120,18 +119,20 @@
 			var speedRatio = 1;     // 速度倍数
 
 
-
 			// 绑定点击事件，开始执行返回顶部动作
             backBtnEle.addEventListener('click', function () {
 
-            	var scrollDis = scrollContainer.scrollTop;
 
 
             	// 默认在滚动距离超过1500时，开始调节speedRatio，进而调节滚动速度
+                var scrollDis = scrollContainer.scrollTop;
+                
 			    if(scrollDis > 1500) {
 			        speedRatio = scrollDis / 1500;
 			        speed *= speedRatio;
 			    }
+
+
 
                 // 降级处理，对于不支持 requestAnimationFrame 的浏览器，不做缓动
                 if(!rAF) {
@@ -145,7 +146,8 @@
 			        scrollDis -= speed;
 			        scrollContainer.scrollTop = scrollDis;
 
-                    if(self.onscroll) self.onscroll();
+                    // 触发滚动事件
+                    if(self.evnetCollection.scroll) self.evnetCollection.scroll();
                     
 			        // 递归调用requestAnimationFrame，产生缓动效果
 			        if(scrollDis > 0) {
@@ -153,16 +155,16 @@
 			            rAF(toTop);
 			        }else{
 
-			        	if(self.callback) {
-			        		self.callback()
+			        	if(self.evnetCollection.top) {
+                            
+			        		self.evnetCollection.top()
 			        	}
                         return;
                     }
 			    }()) 
 
             }, false);
-        },
-        onscroll: null
+        }
     }
 
     window.Top = ToTop;
